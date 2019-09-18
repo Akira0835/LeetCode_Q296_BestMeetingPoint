@@ -1,0 +1,75 @@
+This solution use the idea of regression, numerically calculate the gradient for each position and move 1 step to the direction that gradient getting lower.
+This is not a very effective algorithm for this question, but works and easy to understand. There might be some way to improve the effeciency by make some changes.
+
+I didn't prove whether there are local minimum to trap the answer, but by intuition it doesn't seem so. If any one can prove that, it will be very helpful.
+
+class Solution(object):
+    def minTotalDistance(self, grid):
+        """
+        :type grid: List[List[int]]
+        :rtype: int
+        """
+        #grid = n*m, k people
+        # brute force O(n*m*k)
+        
+        # use gradient search O(m*n)+O((n+m)*4*k)
+		# O(m*n) is scan the entire grids to find where are people.
+		# in the second term, n+m is because the longest path is cross the board diagonally, which needs n+m steps. 
+		# 4*k is for each position need to calculate gradient for each direction and each calculation needs to scan all people, which is k.
+        
+        global people
+		# build people variable, save all people coordinates
+        people = []
+        for n in range(len(grid)):
+            for m in range(len(grid[0])):
+                if grid[n][m] == 1:
+                    people.append((n,m))
+        
+		# function use to calculate gradient for current point with choosen direction.
+        def gradient(point,dx):
+            grad = 0
+			# determing your step is horizontal or verticle
+            if dx[0] == 0:
+                idx = 1
+            elif dx[1] == 0:
+                idx = 0
+            for p in people:
+				if point[idx] == p[idx]:
+                    grad+=1
+                elif (point[idx]-p[idx]) * dx[idx] >0:
+                    grad += 1
+                elif (point[idx]-p[idx]) * dx[idx] <0:
+                    grad -=1
+            return grad
+				# I will use a simple example to explain how I calculate the gradient
+				# eg. point(1,2), people (3,4) dx(0,1)
+				# since dx is horizontal, so only horizontal axis matters. 
+				# we know the horizontal axis of the vector 'people to point' is 2-4=-2
+				# and our move dx is 1. 
+				# And -2*1 <0 which means the vector and dx have opposite direction
+				# so this step will get closer to this people --> grad -=1. and vise versa
+				# a special case is point and people share the same horizontal position.
+				# then no matter you move left:[0,-1] or right[0,1], it will getting farther.
+
+        
+        n = len(grid)
+        m = len(grid[0])        
+		# initial position choose to be the center, it doesn't change the complexity
+		# but will reduce maximum step from (m+n) to (m+n)/2
+        position =[n//2,m//n]
+        step = [[1,0],[-1,0],[0,1],[0,-1]]
+        while True:
+            next = None
+            for s in step:
+                if gradient(position,s) <0:
+                    next=(position[0]+s[0],position[1]+s[1])
+            if next is None:
+                break
+            else:
+                position = next
+				
+        # already found best position, now calculate distance
+        res = 0
+        for p in people:
+            res += abs(p[0]-position[0])+abs(p[1]-position[1])
+        return res
